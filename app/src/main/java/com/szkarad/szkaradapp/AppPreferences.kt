@@ -1,3 +1,4 @@
+package com.szkarad.szkaradapp
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -18,8 +19,7 @@ class AppPreferences(private val context: Context) {
 
     val getTheme: Flow<AppTheme?> = context.dataStore.data
         .map { preferences ->
-            val theme = preferences[KEY_THEME]
-            when(theme) {
+            when(preferences[KEY_THEME]) {
                 AppTheme.Light.name -> AppTheme.Light
                 AppTheme.Dark.name -> AppTheme.Dark
                 else -> AppTheme.Default
