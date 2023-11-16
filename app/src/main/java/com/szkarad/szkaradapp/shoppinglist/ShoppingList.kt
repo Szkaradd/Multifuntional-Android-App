@@ -1,10 +1,12 @@
 package com.szkarad.szkaradapp.shoppinglist
 
+import AppPreferences
 import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,14 +23,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.AddCircle
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
@@ -38,7 +37,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -61,19 +59,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.szkarad.szkaradapp.MainActivity
 import com.szkarad.szkaradapp.common.CommonComposables
+import com.szkarad.szkaradapp.common.SettingsActivity
 import com.szkarad.szkaradapp.shoppinglist.productdb.Product
 import com.szkarad.szkaradapp.shoppinglist.productdb.ProductViewModel
-import com.szkarad.szkaradapp.shoppinglist.ui.theme.Purple40
-import com.szkarad.szkaradapp.shoppinglist.ui.theme.SzkaradAppTheme
-import com.szkarad.szkaradapp.ui.theme.LightKolorek
+import com.szkarad.szkaradapp.ui.theme.AppTheme
+import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
 import java.math.BigDecimal
 
 
 class ShoppingList : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
-            SzkaradAppTheme {
+            val context = LocalContext.current
+            // val scope = rememberCoroutineScope()
+            val dataStore = AppPreferences(context)
+            val theme = dataStore.getTheme.collectAsState(initial = AppTheme.Default)
+
+            SzkaradAppTheme(appTheme = theme.value!!) {
                 val pvm = ProductViewModel(application)
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -89,37 +93,9 @@ class ShoppingList : ComponentActivity() {
 @Composable
 fun ShoppingListScreen(pvm: ProductViewModel) {
     Column {
-        ShoppingListTopBar(onSettingsClicked = {})
+        CommonComposables.CommonTopBar()
         ProductsListColumn(pvm)
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ShoppingListTopBar(onSettingsClicked: () -> Unit) {
-    val context = LocalContext.current
-
-    TopAppBar(
-        title = { Text("Shopping List") },
-        navigationIcon = {
-            IconButton(onClick = {
-                context.startActivity(Intent(context, MainActivity::class.java))
-            }) {
-                Icon(Icons.Filled.Home, contentDescription = "Home")
-            }
-        },
-        actions = {
-            IconButton(onClick = onSettingsClicked) {
-                Icon(Icons.Filled.Settings, contentDescription = "Settings")
-            }
-        },
-        colors = TopAppBarDefaults.smallTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            titleContentColor = MaterialTheme.colorScheme.onPrimary,
-            actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
-            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-        )
-    )
 }
 
 @Composable
@@ -180,7 +156,7 @@ fun ListManagementRow(pvm: ProductViewModel) {
                 Button(onClick = { showClearConfirmDialog = false }) {
                     Text("No")
                 }
-            }
+            },
         )
     }
 
@@ -417,16 +393,3 @@ fun QuantityControl(product: Product, count: String, pvm: ProductViewModel, onCo
         Icon(Icons.Outlined.AddCircle, contentDescription = "Increase")
     }
 }*/
-
-@Preview(showBackground = true)
-@Composable
-fun ProductsListPreview() {
-    val fakeProductViewModel = ProductViewModel(Application())
-    fakeProductViewModel.insertProduct(Product(1, "Mleko", BigDecimal("2.5"), 1, false))
-    fakeProductViewModel.insertProduct(Product(2, "Chleb", BigDecimal("1.5"), 2, true))
-    fakeProductViewModel.insertProduct(Product(3, "Jajka", BigDecimal("3.0"), 12, true))
-
-    SzkaradAppTheme {
-        ProductsList(fakeProductViewModel)
-    }
-}

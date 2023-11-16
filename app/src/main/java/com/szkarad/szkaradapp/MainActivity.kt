@@ -1,10 +1,12 @@
 package com.szkarad.szkaradapp
 
+import AppPreferences
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +23,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -36,14 +41,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.szkarad.szkaradapp.common.CommonComposables
+import com.szkarad.szkaradapp.common.utils.Utils.Companion.addSpacesBeforeCapitals
 import com.szkarad.szkaradapp.shoppinglist.ShoppingList
+import com.szkarad.szkaradapp.ui.theme.AppTheme
 import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
-            SzkaradAppTheme {
+            val context = LocalContext.current
+            val dataStore = AppPreferences(context)
+            val theme = dataStore.getTheme.collectAsState(initial = AppTheme.Default)
+
+            SzkaradAppTheme(appTheme = theme.value!!) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -107,7 +120,7 @@ fun SwitchActivityButton(context: Context, activityClass: Class<*>) {
         shape = RoundedCornerShape(60)
     ) {
         Text(
-            text = activityClass.simpleName,
+            text = activityClass.simpleName.addSpacesBeforeCapitals(),
             style = TextStyle(
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
@@ -122,10 +135,11 @@ fun SwitchActivityButton(context: Context, activityClass: Class<*>) {
     }
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun MainMenuPreview() {
-    SzkaradAppTheme {
+    SzkaradAppTheme(false) {
         MainMenu("User")
     }
-}
+}*/

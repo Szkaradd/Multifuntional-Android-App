@@ -13,6 +13,11 @@
         android:theme="@style/Theme.SzkaradApp"
         tools:targetApi="31">
         <activity
+            android:name=".common.SettingsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_settings"
+            android:theme="@style/Theme.SzkaradApp" />
+        <activity
             android:name=".shoppinglist.ShoppingList"
             android:exported="false"
             android:label="@string/title_activity_shopping_list"

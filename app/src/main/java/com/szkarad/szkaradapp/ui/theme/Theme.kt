@@ -23,10 +23,12 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
-    background = Color.Black
+    primary = Kolorek,
+    secondary = Purple40,
+    tertiary = LightKolorek,
+    onSecondary = Color.LightGray,
+    onTertiary = Purple20,
+    onPrimary = Color.White
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -39,21 +41,32 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+enum class AppTheme {
+    Light, Dark, Default
+}
+
 @Composable
 fun SzkaradAppTheme(
+    appTheme: AppTheme,
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val colorScheme = when (appTheme) {
+        AppTheme.Default -> {
+            if (darkTheme) {
+                DarkColorScheme
+            } else {
+                LightColorScheme
+            }
         }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        AppTheme.Light -> {
+            LightColorScheme
+        }
+
+        AppTheme.Dark -> {
+            DarkColorScheme
+        }
     }
     val view = LocalView.current
     if (!view.isInEditMode) {
