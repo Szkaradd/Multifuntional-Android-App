@@ -19,6 +19,7 @@ abstract class ProductDatabase : RoomDatabase() {
         fun getDatabase(context: Context): ProductDatabase {
             if (instance != null)
                 return instance as ProductDatabase
+
             instance = Room.databaseBuilder(
                 context,
                 ProductDatabase::class.java,
