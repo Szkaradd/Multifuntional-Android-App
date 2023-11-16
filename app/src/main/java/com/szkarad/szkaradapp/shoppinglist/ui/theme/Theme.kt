@@ -17,6 +17,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.szkarad.szkaradapp.ui.theme.DarkGreen
 import com.szkarad.szkaradapp.ui.theme.Kolorek
+import com.szkarad.szkaradapp.ui.theme.LightKolorek
+import com.szkarad.szkaradapp.ui.theme.Purple20
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -26,8 +28,11 @@ private val DarkColorScheme = darkColorScheme(
 
 private val LightColorScheme = lightColorScheme(
     primary = Kolorek,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
+    secondary = Purple40,
+    tertiary = LightKolorek,
+    onSecondary = Color.LightGray,
+    onTertiary = Purple20,
+    onPrimary = Color.White
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),

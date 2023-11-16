@@ -1,6 +1,7 @@
 package com.szkarad.szkaradapp.shoppinglist
 
 import android.app.Application
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -25,7 +25,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
@@ -41,6 +42,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,20 +53,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.SemanticsProperties.ImeAction
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.szkarad.szkaradapp.BackgroundImage
+import com.szkarad.szkaradapp.MainActivity
 import com.szkarad.szkaradapp.common.CommonComposables
 import com.szkarad.szkaradapp.shoppinglist.productdb.Product
 import com.szkarad.szkaradapp.shoppinglist.productdb.ProductViewModel
 import com.szkarad.szkaradapp.shoppinglist.ui.theme.Purple40
 import com.szkarad.szkaradapp.shoppinglist.ui.theme.SzkaradAppTheme
+import com.szkarad.szkaradapp.ui.theme.LightKolorek
 import java.math.BigDecimal
 
 
@@ -75,13 +77,49 @@ class ShoppingList : ComponentActivity() {
                 val pvm = ProductViewModel(application)
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Purple40
+                    color = MaterialTheme.colorScheme.secondary
                 ) {
-                    ProductsListColumn(pvm)
+                    ShoppingListScreen(pvm)
                 }
             }
         }
     }
+}
+
+@Composable
+fun ShoppingListScreen(pvm: ProductViewModel) {
+    Column {
+        ShoppingListTopBar(onSettingsClicked = {})
+        ProductsListColumn(pvm)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ShoppingListTopBar(onSettingsClicked: () -> Unit) {
+    val context = LocalContext.current
+
+    TopAppBar(
+        title = { Text("Shopping List") },
+        navigationIcon = {
+            IconButton(onClick = {
+                context.startActivity(Intent(context, MainActivity::class.java))
+            }) {
+                Icon(Icons.Filled.Home, contentDescription = "Home")
+            }
+        },
+        actions = {
+            IconButton(onClick = onSettingsClicked) {
+                Icon(Icons.Filled.Settings, contentDescription = "Settings")
+            }
+        },
+        colors = TopAppBarDefaults.smallTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            titleContentColor = MaterialTheme.colorScheme.onPrimary,
+            actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+        )
+    )
 }
 
 @Composable
@@ -94,7 +132,7 @@ fun ProductsListColumn(pvm: ProductViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(20.dp))
-        CommonComposables.WelcomeText(text = "Here is your shopping list!", Color.Green)
+        CommonComposables.WelcomeText(text = "Here is your shopping list!", MaterialTheme.colorScheme.onSecondary)
         Spacer(modifier = Modifier.height(20.dp))
         ProductsList(pvm)
         Spacer(modifier = Modifier.weight(1f))
@@ -107,8 +145,8 @@ fun ActionButton(text: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
+            containerColor = MaterialTheme.colorScheme.tertiary,
+            contentColor = MaterialTheme.colorScheme.onTertiary
         ),
         modifier = Modifier
             .padding(8.dp)
@@ -175,7 +213,7 @@ fun ListManagementRow(pvm: ProductViewModel) {
                 TextField(
                     value = price,
                     onValueChange = { price = it },
-                    label = { Text("Price") },
+                    label = { Text("Unit Price") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = price.toBigDecimalOrNull() == null || price.toBigDecimal() < BigDecimal.ZERO,
                     modifier = Modifier.fillMaxWidth()
@@ -217,7 +255,7 @@ fun ListManagementRow(pvm: ProductViewModel) {
 
 
 @Composable
-fun ProductsList(pvm: ProductViewModel, modifier: Modifier = Modifier) {
+fun ProductsList(pvm: ProductViewModel) {
     val products by pvm.products.collectAsState(emptyList())
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
 
@@ -244,7 +282,7 @@ fun ProductRow(product: Product, pvm: ProductViewModel, onEditClick: () -> Unit)
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth(),
-        color = Color.LightGray,
+        color = MaterialTheme.colorScheme.primary,
         shape = RoundedCornerShape(8.dp)
     ) {
         Row(
@@ -262,10 +300,10 @@ fun ProductRow(product: Product, pvm: ProductViewModel, onEditClick: () -> Unit)
 @Composable
 fun ProductSettings(product: Product, pvm: ProductViewModel, onEditClick: () -> Unit) {
     IconButton(onClick = onEditClick, modifier = Modifier.size(32.dp)) {
-        Icon(Icons.Outlined.Edit, "Edit")
+        Icon(Icons.Outlined.Edit, "Edit", tint = MaterialTheme.colorScheme.onPrimary)
     }
     IconButton(onClick = { pvm.deleteProduct(product) }, modifier = Modifier.size(32.dp)) {
-        Icon(Icons.Outlined.Delete, "Delete")
+        Icon(Icons.Outlined.Delete, "Delete", tint = MaterialTheme.colorScheme.onPrimary)
     }
 }
 
@@ -276,7 +314,7 @@ fun ProductDescription(product: Product, modifier: Modifier = Modifier) {
             text = "${product.name} x (${product.count})",
             style = TextStyle(
                 fontSize = 18.sp,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onPrimary,
             )
         )
         Spacer(modifier = Modifier.height(4.dp))
@@ -284,7 +322,7 @@ fun ProductDescription(product: Product, modifier: Modifier = Modifier) {
             text = "total price: ${product.price * BigDecimal(product.count)}",
             style = TextStyle(
                 fontSize = 18.sp,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onPrimary,
             )
         )
     }
@@ -321,7 +359,7 @@ fun EditProductDialog(product: Product, onDismiss: () -> Unit, pvm: ProductViewM
                 TextField(
                     value = newPrice,
                     onValueChange = { newPrice = it },
-                    label = { Text("Price") },
+                    label = { Text("Unit Price") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = newPrice.toBigDecimalOrNull() == null || newPrice.toBigDecimal() < BigDecimal.ZERO,
                     modifier = Modifier.fillMaxWidth()
@@ -352,7 +390,7 @@ fun EditProductDialog(product: Product, onDismiss: () -> Unit, pvm: ProductViewM
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+/*@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuantityControl(product: Product, count: String, pvm: ProductViewModel, onCountChange: (String) -> Unit) {
     var localCount by remember { mutableStateOf(count) }
@@ -367,25 +405,9 @@ fun QuantityControl(product: Product, count: String, pvm: ProductViewModel, onCo
     }) {
         Icon(Icons.Outlined.Close, contentDescription = "Decrease")
     }
-    OutlinedTextField(
-        value = localCount,
-        onValueChange = { newValue ->
-            if (newValue.toIntOrNull() != null) {
-                localCount = newValue
-                onCountChange(localCount)
-            }
-        },
-        textStyle = TextStyle(fontSize = 18.sp, color = Color.Black),
-        singleLine = true,
-        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-        keyboardActions = KeyboardActions(onDone = {
-            val newCount = localCount.toIntOrNull() ?: product.count
-            if (newCount != product.count) {
-                pvm.updateProduct(product.copy(count = newCount))
-            }
-        }),
-        modifier = Modifier.width(40.dp)
-    )
+    
+    Text(text = localCount)
+
     IconButton(onClick = {
         val newCount = (localCount.toIntOrNull() ?: 1) + 1
         localCount = newCount.toString()
@@ -394,7 +416,7 @@ fun QuantityControl(product: Product, count: String, pvm: ProductViewModel, onCo
     }) {
         Icon(Icons.Outlined.AddCircle, contentDescription = "Increase")
     }
-}
+}*/
 
 @Preview(showBackground = true)
 @Composable
