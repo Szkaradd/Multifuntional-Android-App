@@ -2,4 +2,5 @@
     <string name="app_name">Szkarad App</string>
     <string name="title_activity_shopping_list">ShoppingList</string>
     <string name="title_activity_settings">SettingsActivity</string>
+    <string name="welcome_text">Welcome Dear User</string>
 </resources>

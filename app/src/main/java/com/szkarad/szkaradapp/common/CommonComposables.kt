@@ -24,6 +24,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.szkarad.szkaradapp.MainActivity
 import com.szkarad.szkaradapp.common.utils.Utils.Companion.addSpacesBeforeCapitals
@@ -32,7 +33,7 @@ import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
 class CommonComposables {
     companion object {
         @Composable
-        fun WelcomeText(text: String, color: Color) {
+        fun WelcomeText(text: String, color: Color, fontSize: TextUnit = 45.sp) {
             val shadow = Shadow(
                 color = Color.Black,
                 offset = Offset(4f, 4f),
@@ -41,7 +42,7 @@ class CommonComposables {
             Text(
                 text = text,
                 style = TextStyle(
-                    fontSize = 45.sp,
+                    fontSize = fontSize,
                     fontWeight = FontWeight.Bold,
                     shadow = shadow,
                     color = color,
@@ -89,7 +90,7 @@ class CommonComposables {
     @Composable
     fun WelcomeTextPreview() {
         SzkaradAppTheme {
-            WelcomeText("Hello Dear User", Color.Black)
+            WelcomeText("Hello Dear User", Color.Black, 30.sp)
         }
     }
 }

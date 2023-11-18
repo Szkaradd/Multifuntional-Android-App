@@ -30,8 +30,10 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.szkarad.szkaradapp.common.CommonComposables
@@ -51,7 +53,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     BackgroundImage {
-                        MainMenu("User")
+                        MainMenu()
                     }
                 }
             }
@@ -73,7 +75,7 @@ fun BackgroundImage(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun MainMenu(name: String) {
+fun MainMenu() {
     val context = LocalContext.current
     Column(
         modifier = Modifier
@@ -83,7 +85,7 @@ fun MainMenu(name: String) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(20.dp))
-        CommonComposables.WelcomeText("Hello Dear $name!", Color.Black)
+        CommonComposables.WelcomeText(stringResource(id = R.string.welcome_text), Color.Black,)
         Spacer(modifier = Modifier.height(50.dp))
         SwitchActivityButton(context, ShoppingList::class.java)
     }
@@ -124,11 +126,10 @@ fun SwitchActivityButton(context: Context, activityClass: Class<*>) {
     }
 }
 
-/*
 @Preview(showBackground = true)
 @Composable
 fun MainMenuPreview() {
-    SzkaradAppTheme(false) {
-        MainMenu("User")
+    SzkaradAppTheme {
+        MainMenu()
     }
-}*/
+}

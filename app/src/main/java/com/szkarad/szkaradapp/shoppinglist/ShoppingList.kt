@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +33,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -46,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.szkarad.szkaradapp.common.CommonComposables
 import com.szkarad.szkaradapp.shoppinglist.productdb.Product
 import com.szkarad.szkaradapp.shoppinglist.productdb.ProductViewModel
@@ -79,21 +82,28 @@ fun ShoppingListScreen(pvm: ProductViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductsListColumn(pvm: ProductViewModel) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(4.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(20.dp))
-        CommonComposables.WelcomeText(text = "Here is your shopping list!", MaterialTheme.colorScheme.onSecondary)
-        Spacer(modifier = Modifier.height(20.dp))
-        ProductsList(pvm)
-        Spacer(modifier = Modifier.weight(1f))
-        ListManagementRow(pvm)
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.secondary,
+        bottomBar = { ListManagementRow(pvm) }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(12.dp))
+            CommonComposables.WelcomeText(
+                text = "Here is your shopping list!",
+                MaterialTheme.colorScheme.onSecondary,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            ProductsList(pvm)
+        }
     }
 }
 
@@ -175,7 +185,7 @@ fun ProductsList(pvm: ProductViewModel) {
 
     LazyColumn(
         modifier = Modifier
-            .requiredHeight(400.dp)
+            .fillMaxHeight()
             .fillMaxWidth()
     ) {
         items(products) { product ->
