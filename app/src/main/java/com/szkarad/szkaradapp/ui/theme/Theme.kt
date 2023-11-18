@@ -7,10 +7,13 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.szkarad.szkaradapp.AppPreferences
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -43,29 +46,42 @@ enum class AppTheme {
     Light, Dark, Default
 }
 
+enum class IconSize {
+    BigIcons, MediumIcons, Default
+}
+
 @Composable
 fun SzkaradAppTheme(
-    appTheme: AppTheme,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when (appTheme) {
-        AppTheme.Default -> {
+    val context = LocalContext.current
+    val dataStore = AppPreferences(context)
+    val appTheme = dataStore.getTheme.collectAsState(initial = AppTheme.Default)
+    val iconSize = dataStore.getIconSize.collectAsState(initial = IconSize.MediumIcons)
+
+    val colorScheme = when (appTheme.value!!) {
+        AppTheme.Light -> {
+            LightColorScheme
+        }
+        AppTheme.Dark -> {
+            DarkColorScheme
+        }
+        else -> {
             if (darkTheme) {
                 DarkColorScheme
             } else {
                 LightColorScheme
             }
         }
-
-        AppTheme.Light -> {
-            LightColorScheme
-        }
-
-        AppTheme.Dark -> {
-            DarkColorScheme
-        }
     }
+
+    val typography = when (iconSize.value!!) {
+        IconSize.BigIcons -> { LargeTypography }
+        else -> { MediumTypography }
+    }
+
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -75,9 +91,11 @@ fun SzkaradAppTheme(
         }
     }
 
+    println("Initializing activity with typography: ${typography.bodyLarge}")
+
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = typography,
         content = content
     )
 }

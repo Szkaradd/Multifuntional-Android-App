@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.szkarad.szkaradapp.AppPreferences
 import com.szkarad.szkaradapp.ui.theme.AppTheme
+import com.szkarad.szkaradapp.ui.theme.IconSize
 import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -39,15 +40,16 @@ class SettingsActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             val dataStore = AppPreferences(context)
             val theme = dataStore.getTheme.collectAsState(initial = AppTheme.Default)
+            val iconSize = dataStore.getIconSize.collectAsState(initial = IconSize.Default)
 
-            SzkaradAppTheme(appTheme = theme.value!!) {
+            SzkaradAppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.secondary
                 ) {
                     Column {
                         CommonComposables.CommonTopBar()
-                        Settings(scope, dataStore, theme.value!!)
+                        Settings(scope, dataStore, theme.value!!, iconSize.value!!)
                     }
                 }
             }
@@ -60,6 +62,7 @@ fun Settings(
     scope: CoroutineScope,
     dataStore: AppPreferences,
     theme: AppTheme,
+    iconSize: IconSize,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -91,6 +94,27 @@ fun Settings(
                     val newTheme = if (isChecked) AppTheme.Dark else AppTheme.Light
                     scope.launch {
                         dataStore.saveTheme(newTheme)
+                    }
+                }
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Big Icons",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Switch(
+                checked = iconSize == IconSize.BigIcons,
+                onCheckedChange = { isChecked ->
+                    val newSize = if (isChecked) IconSize.BigIcons else IconSize.MediumIcons
+                    scope.launch {
+                        println("Changing icon size to: ${newSize.name}")
+                        dataStore.saveIconSize(newSize)
                     }
                 }
             )

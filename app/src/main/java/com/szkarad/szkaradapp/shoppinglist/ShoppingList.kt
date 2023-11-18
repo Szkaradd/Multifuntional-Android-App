@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,16 +44,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.szkarad.szkaradapp.AppPreferences
 import com.szkarad.szkaradapp.common.CommonComposables
 import com.szkarad.szkaradapp.shoppinglist.productdb.Product
 import com.szkarad.szkaradapp.shoppinglist.productdb.ProductViewModel
-import com.szkarad.szkaradapp.ui.theme.AppTheme
 import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
 import java.math.BigDecimal
 
@@ -62,12 +58,7 @@ class ShoppingList : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val context = LocalContext.current
-            // val scope = rememberCoroutineScope()
-            val dataStore = AppPreferences(context)
-            val theme = dataStore.getTheme.collectAsState(initial = AppTheme.Default)
-
-            SzkaradAppTheme(appTheme = theme.value!!) {
+            SzkaradAppTheme {
                 val pvm = ProductViewModel(application)
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -119,11 +110,10 @@ fun ActionButton(text: String, onClick: () -> Unit) {
             .requiredWidth(160.dp)
             .requiredHeight(50.dp)
     ) {
-        Text(text)
+        Text(text = text, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListManagementRow(pvm: ProductViewModel) {
     var showClearConfirmDialog by remember { mutableStateOf(false) }
@@ -150,63 +140,17 @@ fun ListManagementRow(pvm: ProductViewModel) {
         )
     }
 
-    var name by remember { mutableStateOf("") }
-    var count by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
     if (showAddItemDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddItemDialog = false },
-            title = { Text("Add Item") },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                TextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") },
-                    isError = name.isBlank() || name.length > 50,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                TextField(
-                    value = count,
-                    onValueChange = { count = it },
-                    label = { Text("Count") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = count.toIntOrNull() == null || count.toInt() <= 0,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                TextField(
-                    value = price,
-                    onValueChange = { price = it },
-                    label = { Text("Unit Price") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = price.toBigDecimalOrNull() == null || price.toBigDecimal() < BigDecimal.ZERO,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                errorMessage?.let { Text(it, color = Color.Red) }
-            } },
-            confirmButton = {
-                Button(onClick = {
-                    if (name.isBlank() || name.length > 50) {
-                        errorMessage = "Invalid name"
-                    } else if (count.toIntOrNull() == null || count.toInt() <= 0) {
-                        errorMessage = "Invalid count"
-                    } else if (price.toBigDecimalOrNull() == null || price.toBigDecimal() < BigDecimal.ZERO) {
-                        errorMessage = "Invalid price"
-                    } else {
-                        pvm.insertProduct(Product(name = name, price = BigDecimal(price), count = count.toInt(), status = false))
-                        showAddItemDialog = false
-                    }
-                }) {
-                    Text("Add")
-                }
+        ProductDialog(
+            title = "Add Item",
+            initialName = "",
+            initialCount = "",
+            initialPrice = "",
+            onConfirm = { name, count, price ->
+                pvm.insertProduct(Product(name = name, price = BigDecimal(price), count = count.toInt(), status = false))
+                showAddItemDialog = false
             },
-            dismissButton = {
-                Button(onClick = { showAddItemDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { showAddItemDialog = false }
         )
     }
 
@@ -242,7 +186,7 @@ fun ProductsList(pvm: ProductViewModel) {
 
 @Composable
 fun ProductRow(product: Product, pvm: ProductViewModel, onEditClick: () -> Unit) {
-    // var count by remember { mutableStateOf(product.count.toString()) }
+    var status by remember { mutableStateOf(product.status) }
 
     Surface(
         modifier = Modifier
@@ -255,9 +199,16 @@ fun ProductRow(product: Product, pvm: ProductViewModel, onEditClick: () -> Unit)
             modifier = Modifier.padding(all = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Checkbox(
+                checked = status,
+                onCheckedChange = {
+                    status = it
+                    product.status = it
+                    pvm.updateProduct(product.copy(status = status))
+                }
+            )
             ProductDescription(product, Modifier.weight(1f))
             Spacer(modifier = Modifier.width(8.dp))
-            // QuantityControl(product, count, pvm, onCountChange = { count = it })
             ProductSettings(product, pvm, onEditClick)
         }
     }
@@ -278,56 +229,59 @@ fun ProductDescription(product: Product, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(
             text = "${product.name} x (${product.count})",
-            style = TextStyle(
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onPrimary,
             )
-        )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = "total price: ${product.price * BigDecimal(product.count)}",
-            style = TextStyle(
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onPrimary,
-            )
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimary,
         )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditProductDialog(product: Product, onDismiss: () -> Unit, pvm: ProductViewModel) {
-    var newName by remember { mutableStateOf(product.name) }
-    var newCount by remember { mutableStateOf(product.count.toString()) }
-    var newPrice by remember { mutableStateOf(product.price.toString()) }
+fun ProductDialog(
+    title: String,
+    initialName: String,
+    initialCount: String,
+    initialPrice: String,
+    onConfirm: (String, String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember { mutableStateOf(initialName) }
+    var count by remember { mutableStateOf(initialCount) }
+    var price by remember { mutableStateOf(initialPrice) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Product") },
-        text = {
+        title = { Text(title) },
+        text =  {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 TextField(
-                    value = newName,
-                    onValueChange = { newName = it },
+                    value = name,
+                    onValueChange = { name = it },
                     label = { Text("Name") },
-                    isError = newName.isBlank() || newName.length > 50,
+                    isError = name.isBlank() || name.length > 50,
                     modifier = Modifier.fillMaxWidth()
                 )
                 TextField(
-                    value = newCount,
-                    onValueChange = { newCount = it },
+                    value = count,
+                    onValueChange = { count = it },
                     label = { Text("Count") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = newCount.toIntOrNull() == null || newCount.toInt() <= 0,
+                    isError = count.toIntOrNull() == null || count.toInt() <= 0,
                     modifier = Modifier.fillMaxWidth()
                 )
                 TextField(
-                    value = newPrice,
-                    onValueChange = { newPrice = it },
+                    value = price,
+                    onValueChange = { price = it },
                     label = { Text("Unit Price") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = newPrice.toBigDecimalOrNull() == null || newPrice.toBigDecimal() < BigDecimal.ZERO,
+                    isError = price.toBigDecimalOrNull() == null || price.toBigDecimal() < BigDecimal.ZERO,
                     modifier = Modifier.fillMaxWidth()
                 )
                 errorMessage?.let { Text(it, color = Color.Red) }
@@ -336,15 +290,14 @@ fun EditProductDialog(product: Product, onDismiss: () -> Unit, pvm: ProductViewM
         confirmButton = {
             Button(
                 onClick = {
-                    if (newName.isBlank() || newName.length > 50) {
+                    if (name.isBlank() || name.length > 50) {
                         errorMessage = "Invalid name"
-                    } else if (newCount.toIntOrNull() == null || newCount.toInt() <= 0) {
+                    } else if (count.toIntOrNull() == null || count.toInt() <= 0) {
                         errorMessage = "Invalid count"
-                    } else if (newPrice.toBigDecimalOrNull() == null || newPrice.toBigDecimal() < BigDecimal.ZERO) {
+                    } else if (price.toBigDecimalOrNull() == null || price.toBigDecimal() < BigDecimal.ZERO) {
                         errorMessage = "Invalid price"
                     } else {
-                        pvm.updateProduct(product.copy(name = newName, count = newCount.toInt(), price = BigDecimal(newPrice)))
-                        onDismiss()
+                        onConfirm(name, count, price)
                     }
                 }
             ) { Text("Confirm") }
@@ -355,31 +308,17 @@ fun EditProductDialog(product: Product, onDismiss: () -> Unit, pvm: ProductViewM
     )
 }
 
-
-/*@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuantityControl(product: Product, count: String, pvm: ProductViewModel, onCountChange: (String) -> Unit) {
-    var localCount by remember { mutableStateOf(count) }
-
-    IconButton(onClick = {
-        val newCount = (localCount.toIntOrNull() ?: 1) - 1
-        if (newCount > 0) {
-            localCount = newCount.toString()
-            onCountChange(localCount)
-            pvm.updateProduct(product.copy(count = newCount))
-        }
-    }) {
-        Icon(Icons.Outlined.Close, contentDescription = "Decrease")
-    }
-    
-    Text(text = localCount)
-
-    IconButton(onClick = {
-        val newCount = (localCount.toIntOrNull() ?: 1) + 1
-        localCount = newCount.toString()
-        onCountChange(localCount)
-        pvm.updateProduct(product.copy(count = newCount))
-    }) {
-        Icon(Icons.Outlined.AddCircle, contentDescription = "Increase")
-    }
-}*/
+fun EditProductDialog(product: Product, onDismiss: () -> Unit, pvm: ProductViewModel) {
+    ProductDialog(
+        title = "Edit Product",
+        initialName = product.name,
+        initialCount = product.count.toString(),
+        initialPrice = product.price.toString(),
+        onConfirm = { newName, newCount, newPrice ->
+            pvm.updateProduct(product.copy(name = newName, count = newCount.toInt(), price = BigDecimal(newPrice)))
+            onDismiss()
+        },
+        onDismiss = onDismiss
+    )
+}

@@ -27,7 +27,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.szkarad.szkaradapp.MainActivity
 import com.szkarad.szkaradapp.common.utils.Utils.Companion.addSpacesBeforeCapitals
-import com.szkarad.szkaradapp.ui.theme.AppTheme
 import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
 
 class CommonComposables {
@@ -89,7 +88,7 @@ class CommonComposables {
     @Preview(showBackground = true)
     @Composable
     fun WelcomeTextPreview() {
-        SzkaradAppTheme(AppTheme.Light) {
+        SzkaradAppTheme {
             WelcomeText("Hello Dear User", Color.Black)
         }
     }

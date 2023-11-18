@@ -21,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -38,7 +37,6 @@ import androidx.compose.ui.unit.sp
 import com.szkarad.szkaradapp.common.CommonComposables
 import com.szkarad.szkaradapp.common.utils.Utils.Companion.addSpacesBeforeCapitals
 import com.szkarad.szkaradapp.shoppinglist.ShoppingList
-import com.szkarad.szkaradapp.ui.theme.AppTheme
 import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -47,11 +45,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val context = LocalContext.current
-            val dataStore = AppPreferences(context)
-            val theme = dataStore.getTheme.collectAsState(initial = AppTheme.Default)
-
-            SzkaradAppTheme(appTheme = theme.value!!) {
+            SzkaradAppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
