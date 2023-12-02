@@ -40,6 +40,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +65,8 @@ class ShoppingList : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handleIntent(intent)
+        val testString = intent.getStringExtra("TEST_STRING")
+        println("RECEIVED STRING TEST: $testString")
 
         setContent {
             SzkaradAppTheme {
@@ -84,7 +87,8 @@ class ShoppingList : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        selectedProductId = intent.getLongExtra("com.szkarad.receiverapp.productId", -3)
+        selectedProductId = intent.getLongExtra("com.szkarad.receiverapp.productId", -1)
+        println("RECEIVED SOME COOOL PRODUCT ID: $selectedProductId")
     }
 }
 
@@ -200,9 +204,15 @@ fun ListManagementRow(pvm: ProductViewModel) {
 fun ProductsList(pvm: ProductViewModel, selectedProductId: Long?) {
     val products by pvm.products.collectAsState(emptyList())
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
-    if (selectedProductId != null) {
-        selectedProduct = pvm.getProductById(selectedProductId)
+
+    LaunchedEffect(selectedProductId) {
+        if (selectedProductId != null && selectedProductId != -1L) {
+            pvm.getProductById(selectedProductId) { product ->
+                selectedProduct = product
+            }
+        }
     }
+
     if (selectedProduct != null) {
         EditProductDialog(product = selectedProduct!!, onDismiss = { selectedProduct = null }, pvm = pvm)
     }

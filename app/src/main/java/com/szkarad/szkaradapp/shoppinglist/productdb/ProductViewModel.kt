@@ -11,12 +11,11 @@ class ProductViewModel(app: Application) : AndroidViewModel(app) {
     private val productRepository: ProductRepository
     val products: Flow<List<Product>>
 
-    fun getProductById(productId: Long): Product? {
-        var product: Product? = null
+    fun getProductById(productId: Long, onProductReceived: (Product?) -> Unit) {
         viewModelScope.launch {
-            product = productRepository.getProductById(productId)
+            val product = productRepository.getProductById(productId)
+            onProductReceived(product)
         }
-        return product
     }
 
     init {
