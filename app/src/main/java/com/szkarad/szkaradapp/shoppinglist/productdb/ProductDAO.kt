@@ -13,8 +13,11 @@ interface ProductDAO {
     @Query("SELECT * FROM product")
     fun getProducts(): Flow<List<Product>>
 
+    @Query("SELECT * FROM Product WHERE id = :productId")
+    suspend fun getProductById(productId: Long): Product
+
     @Insert
-    suspend fun insertProduct(product: Product)
+    suspend fun insertProduct(product: Product): Long
 
     @Update
     suspend fun updateProduct(product: Product)

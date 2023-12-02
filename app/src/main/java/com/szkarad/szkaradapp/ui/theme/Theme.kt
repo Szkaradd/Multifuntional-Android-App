@@ -91,8 +91,6 @@ fun SzkaradAppTheme(
         }
     }
 
-    println("Initializing activity with typography: ${typography.bodyLarge}")
-
     MaterialTheme(
         colorScheme = colorScheme,
         typography = typography,

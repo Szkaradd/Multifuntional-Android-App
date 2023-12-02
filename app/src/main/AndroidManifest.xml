@@ -19,7 +19,7 @@
             android:theme="@style/Theme.SzkaradApp" />
         <activity
             android:name=".shoppinglist.ShoppingList"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/title_activity_shopping_list"
             android:theme="@style/Theme.SzkaradApp" />
         <activity

@@ -11,15 +11,24 @@ class ProductViewModel(app: Application) : AndroidViewModel(app) {
     private val productRepository: ProductRepository
     val products: Flow<List<Product>>
 
+    fun getProductById(productId: Long): Product? {
+        var product: Product? = null
+        viewModelScope.launch {
+            product = productRepository.getProductById(productId)
+        }
+        return product
+    }
+
     init {
         val productDAO = ProductDatabase.getDatabase(app).productDAO()
         productRepository = ProductRepository(productDAO)
         products = productRepository.allProducts
     }
 
-    fun insertProduct(product: Product) {
+    fun insertProduct(product: Product, onResult: (Long) -> Unit) {
         viewModelScope.launch {
-            productRepository.insert(product)
+            val id = productRepository.insert(product)
+            onResult(id)
         }
     }
 

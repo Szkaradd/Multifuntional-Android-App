@@ -1,5 +1,7 @@
 package com.szkarad.szkaradapp.shoppinglist
 
+import android.content.ComponentName
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -46,9 +48,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.szkarad.szkaradapp.common.CommonComposables
 import com.szkarad.szkaradapp.shoppinglist.productdb.Product
 import com.szkarad.szkaradapp.shoppinglist.productdb.ProductViewModel
@@ -57,8 +59,11 @@ import java.math.BigDecimal
 
 
 class ShoppingList : ComponentActivity() {
+    private var selectedProductId by mutableStateOf<Long?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleIntent(intent)
 
         setContent {
             SzkaradAppTheme {
@@ -67,24 +72,34 @@ class ShoppingList : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.secondary
                 ) {
-                    ShoppingListScreen(pvm)
+                    ShoppingListScreen(pvm, selectedProductId)
                 }
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent) {
+        selectedProductId = intent.getLongExtra("com.szkarad.receiverapp.productId", -3)
+    }
 }
 
+
 @Composable
-fun ShoppingListScreen(pvm: ProductViewModel) {
+fun ShoppingListScreen(pvm: ProductViewModel, selectedProductId: Long?) {
     Column {
         CommonComposables.CommonTopBar()
-        ProductsListColumn(pvm)
+        ProductsListColumn(pvm, selectedProductId)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductsListColumn(pvm: ProductViewModel) {
+fun ProductsListColumn(pvm: ProductViewModel, selectedProductId: Long?) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.secondary,
         bottomBar = { ListManagementRow(pvm) }
@@ -102,7 +117,7 @@ fun ProductsListColumn(pvm: ProductViewModel) {
                 MaterialTheme.colorScheme.onSecondary,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            ProductsList(pvm)
+            ProductsList(pvm, selectedProductId)
         }
     }
 }
@@ -126,6 +141,7 @@ fun ActionButton(text: String, onClick: () -> Unit) {
 
 @Composable
 fun ListManagementRow(pvm: ProductViewModel) {
+    val context = LocalContext.current
     var showClearConfirmDialog by remember { mutableStateOf(false) }
     var showAddItemDialog by remember { mutableStateOf(false) }
 
@@ -157,7 +173,13 @@ fun ListManagementRow(pvm: ProductViewModel) {
             initialCount = "",
             initialPrice = "",
             onConfirm = { name, count, price ->
-                pvm.insertProduct(Product(name = name, price = BigDecimal(price), count = count.toInt(), status = false))
+                pvm.insertProduct(Product(name = name, price = BigDecimal(price), count = count.toInt(), status = false)) { id ->
+                    val intent = Intent("com.szkarad.szkaradapp.ACTION_SEND")
+                    intent.putExtra("com.szkarad.szkaradapp.productId", id)
+                    intent.putExtra("com.szkarad.szkaradapp.productName", name)
+                    intent.component = ComponentName("com.szkarad.receiverapp", "com.szkarad.receiverapp.ProductReceiver")
+                    context.sendBroadcast(intent)
+                }
                 showAddItemDialog = false
             },
             onDismiss = { showAddItemDialog = false }
@@ -175,10 +197,12 @@ fun ListManagementRow(pvm: ProductViewModel) {
 
 
 @Composable
-fun ProductsList(pvm: ProductViewModel) {
+fun ProductsList(pvm: ProductViewModel, selectedProductId: Long?) {
     val products by pvm.products.collectAsState(emptyList())
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
-
+    if (selectedProductId != null) {
+        selectedProduct = pvm.getProductById(selectedProductId)
+    }
     if (selectedProduct != null) {
         EditProductDialog(product = selectedProduct!!, onDismiss = { selectedProduct = null }, pvm = pvm)
     }

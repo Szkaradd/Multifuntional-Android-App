@@ -113,7 +113,6 @@ fun Settings(
                 onCheckedChange = { isChecked ->
                     val newSize = if (isChecked) IconSize.BigIcons else IconSize.MediumIcons
                     scope.launch {
-                        println("Changing icon size to: ${newSize.name}")
                         dataStore.saveIconSize(newSize)
                     }
                 }
