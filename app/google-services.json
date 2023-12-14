@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "63035941928",
+    "project_id": "szkaradapp",
+    "storage_bucket": "szkaradapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63035941928:android:f1a90351a6db4e56f1411d",
+        "android_client_info": {
+          "package_name": "com.szkarad.szkaradapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTvlfhqI6ve_BZmSGL5HpF2fTAqlwjyeE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
