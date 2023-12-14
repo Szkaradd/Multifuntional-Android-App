@@ -1,15 +1,11 @@
 package com.szkarad.szkaradapp.shoppinglist.productdb
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import java.math.BigDecimal
-
-@Entity
 data class Product(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    var id: String,
     val name: String,
-    val price: BigDecimal,
+    val price: String,
     val count: Int,
-    var status: Boolean
-)
+    val status: Boolean
+) {
+    constructor(): this("","","0",0,false)
+}

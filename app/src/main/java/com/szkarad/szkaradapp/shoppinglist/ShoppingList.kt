@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.google.firebase.auth.FirebaseAuth
 import com.szkarad.szkaradapp.common.CommonComposables
 import com.szkarad.szkaradapp.shoppinglist.productdb.Product
 import com.szkarad.szkaradapp.shoppinglist.productdb.ProductViewModel
@@ -60,7 +61,7 @@ import java.math.BigDecimal
 
 
 class ShoppingList : ComponentActivity() {
-    private var selectedProductId by mutableStateOf<Long?>(null)
+    var selectedProductId by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,7 +71,9 @@ class ShoppingList : ComponentActivity() {
 
         setContent {
             SzkaradAppTheme {
-                val pvm = ProductViewModel(application)
+                val user = FirebaseAuth.getInstance().currentUser
+                val uid = user!!.uid
+                val pvm = ProductViewModel(application, uid)
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.secondary
@@ -87,14 +90,14 @@ class ShoppingList : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        selectedProductId = intent.getLongExtra("com.szkarad.receiverapp.productId", -1)
+        selectedProductId = intent.getStringExtra("com.szkarad.receiverapp.productId")
         println("RECEIVED SOME COOOL PRODUCT ID: $selectedProductId")
     }
 }
 
 
 @Composable
-fun ShoppingListScreen(pvm: ProductViewModel, selectedProductId: Long?) {
+fun ShoppingListScreen(pvm: ProductViewModel, selectedProductId: String?) {
     Column {
         CommonComposables.CommonTopBar()
         ProductsListColumn(pvm, selectedProductId)
@@ -103,7 +106,7 @@ fun ShoppingListScreen(pvm: ProductViewModel, selectedProductId: Long?) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductsListColumn(pvm: ProductViewModel, selectedProductId: Long?) {
+fun ProductsListColumn(pvm: ProductViewModel, selectedProductId: String?) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.secondary,
         bottomBar = { ListManagementRow(pvm) }
@@ -177,7 +180,10 @@ fun ListManagementRow(pvm: ProductViewModel) {
             initialCount = "",
             initialPrice = "",
             onConfirm = { name, count, price ->
-                pvm.insertProduct(Product(name = name, price = BigDecimal(price), count = count.toInt(), status = false)) { id ->
+                var product = Product(id = "", name = name, price = price, count = count.toInt(), status = false)
+                pvm.insertProduct(product) { id ->
+                    product.id = id
+                    pvm.updateProduct(product)
                     val intent = Intent("com.szkarad.szkaradapp.ACTION_SEND")
                     intent.putExtra("com.szkarad.szkaradapp.productId", id)
                     intent.putExtra("com.szkarad.szkaradapp.productName", name)
@@ -201,12 +207,12 @@ fun ListManagementRow(pvm: ProductViewModel) {
 
 
 @Composable
-fun ProductsList(pvm: ProductViewModel, selectedProductId: Long?) {
+fun ProductsList(pvm: ProductViewModel, selectedProductId: String?) {
     val products by pvm.products.collectAsState(emptyList())
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
 
     LaunchedEffect(selectedProductId) {
-        if (selectedProductId != null && selectedProductId != -1L) {
+        if (selectedProductId != null && selectedProductId != "") {
             pvm.getProductById(selectedProductId) { product ->
                 selectedProduct = product
             }
@@ -247,7 +253,6 @@ fun ProductRow(product: Product, pvm: ProductViewModel, onEditClick: () -> Unit)
                 checked = status,
                 onCheckedChange = {
                     status = it
-                    product.status = it
                     pvm.updateProduct(product.copy(status = status))
                 }
             )
@@ -278,7 +283,7 @@ fun ProductDescription(product: Product, modifier: Modifier = Modifier) {
             )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "total price: ${product.price * BigDecimal(product.count)}",
+            text = "total price: ${BigDecimal(product.price) * BigDecimal(product.count)}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onPrimary,
         )
@@ -358,9 +363,9 @@ fun EditProductDialog(product: Product, onDismiss: () -> Unit, pvm: ProductViewM
         title = "Edit Product",
         initialName = product.name,
         initialCount = product.count.toString(),
-        initialPrice = product.price.toString(),
+        initialPrice = product.price,
         onConfirm = { newName, newCount, newPrice ->
-            pvm.updateProduct(product.copy(name = newName, count = newCount.toInt(), price = BigDecimal(newPrice)))
+            pvm.updateProduct(product.copy(name = newName, count = newCount.toInt(), price = newPrice))
             onDismiss()
         },
         onDismiss = onDismiss

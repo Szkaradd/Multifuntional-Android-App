@@ -1,4 +1,4 @@
-package com.szkarad.szkaradapp.common
+package com.szkarad.szkaradapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -24,7 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.szkarad.szkaradapp.AppPreferences
+import com.szkarad.szkaradapp.common.CommonComposables
 import com.szkarad.szkaradapp.ui.theme.AppTheme
 import com.szkarad.szkaradapp.ui.theme.IconSize
 import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme

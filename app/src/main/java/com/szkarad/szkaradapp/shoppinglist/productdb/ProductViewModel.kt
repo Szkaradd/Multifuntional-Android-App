@@ -3,28 +3,35 @@ package com.szkarad.szkaradapp.shoppinglist.productdb
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.szkarad.szkaradapp.shoppinglist.firebasedb.FirebaseDB
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
-class ProductViewModel(app: Application) : AndroidViewModel(app) {
+class ProductViewModel(app : Application, userPath: String) : AndroidViewModel(app) {
 
+    private val firebaseDB: FirebaseDB
+    private val productDAO: ProductDAO
     private val productRepository: ProductRepository
     val products: Flow<List<Product>>
 
-    fun getProductById(productId: Long, onProductReceived: (Product?) -> Unit) {
-        viewModelScope.launch {
-            val product = productRepository.getProductById(productId)
-            onProductReceived(product)
-        }
-    }
-
     init {
-        val productDAO = ProductDatabase.getDatabase(app).productDAO()
+        firebaseDB = FirebaseDB.getInstance(userPath)
+        productDAO = firebaseDB.getProductDAO()
         productRepository = ProductRepository(productDAO)
         products = productRepository.allProducts
     }
 
-    fun insertProduct(product: Product, onResult: (Long) -> Unit) {
+
+    fun getProductById(productId: String, onProductReceived: (Product?) -> Unit) {
+        viewModelScope.launch {
+            productRepository.getProductById(productId)
+                .collect { product ->
+                    onProductReceived(product)
+                }
+        }
+    }
+
+    fun insertProduct(product: Product, onResult: (String) -> Unit) {
         viewModelScope.launch {
             val id = productRepository.insert(product)
             onResult(id)

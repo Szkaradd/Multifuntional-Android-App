@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.szkarad.szkaradapp.MainActivity
+import com.szkarad.szkaradapp.SettingsActivity
 import com.szkarad.szkaradapp.common.utils.Utils.Companion.addSpacesBeforeCapitals
 import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
 
