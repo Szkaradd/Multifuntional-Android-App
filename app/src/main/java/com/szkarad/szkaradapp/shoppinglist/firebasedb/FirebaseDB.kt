@@ -5,7 +5,7 @@ import com.szkarad.szkaradapp.shoppinglist.productdb.ProductDAO
 
 class FirebaseDB(private val userPath: String) {
     private val database = FirebaseDatabase.getInstance("https://szkaradapp-default-rtdb.europe-west1.firebasedatabase.app/")
-    private val dbRef = database.getReference("products/$userPath")
+    private val productsDbRef = database.getReference("products/$userPath")
 
     companion object {
         private var instance: FirebaseDB? = null
@@ -20,6 +20,6 @@ class FirebaseDB(private val userPath: String) {
     }
 
     fun getProductDAO(): ProductDAO {
-        return ProductDAO(dbRef)
+        return ProductDAO(productsDbRef)
     }
 }
