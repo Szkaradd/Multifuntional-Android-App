@@ -5,6 +5,10 @@ class Utils {
         fun String.addSpacesBeforeCapitals(): String {
             return this.replace(Regex("(?<!^)([A-Z])"), " $1")
         }
+
+        fun String.removeActivityKeyword(): String {
+            return this.replace(Regex("Activity"), "")
+        }
     }
 
 }
