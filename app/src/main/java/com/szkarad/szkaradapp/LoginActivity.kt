@@ -53,7 +53,7 @@ class LoginActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Greeting3(auth: FirebaseAuth, modifier: Modifier = Modifier) {
+fun Greeting3(auth: FirebaseAuth) {
     val context = LocalContext.current
     var displayTextPass by remember { mutableStateOf("password") }
     var displayTextLogin by remember { mutableStateOf("email") }
@@ -85,7 +85,7 @@ fun Greeting3(auth: FirebaseAuth, modifier: Modifier = Modifier) {
                 .align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.requiredHeight(20.dp))
-        Button( // TODO
+        Button(
             onClick = {
                 auth.createUserWithEmailAndPassword(
                     displayTextLogin,
@@ -108,6 +108,7 @@ fun Greeting3(auth: FirebaseAuth, modifier: Modifier = Modifier) {
                 auth.signInWithEmailAndPassword(displayTextLogin, displayTextPass)
                     .addOnCompleteListener {
                         if (it.isSuccessful) context.startActivity(Intent(context, MainActivity::class.java))
+                        else Toast.makeText(context, "Bad login or password", Toast.LENGTH_LONG).show()
                     }
             },
             modifier = Modifier

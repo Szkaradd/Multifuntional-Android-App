@@ -1,9 +1,9 @@
-package com.szkarad.szkaradapp.shoppinglist.productdb
+package com.szkarad.szkaradapp.firebasedb.productdb
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.szkarad.szkaradapp.shoppinglist.firebasedb.FirebaseDB
+import com.szkarad.szkaradapp.firebasedb.FirebaseDB
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 

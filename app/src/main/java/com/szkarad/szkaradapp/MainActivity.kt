@@ -42,6 +42,9 @@ import com.google.firebase.auth.auth
 import com.szkarad.szkaradapp.common.CommonComposables
 import com.szkarad.szkaradapp.common.utils.Utils.Companion.addSpacesBeforeCapitals
 import com.szkarad.szkaradapp.common.utils.Utils.Companion.removeActivityKeyword
+import com.szkarad.szkaradapp.common.utils.Utils.Companion.removeEmailEnding
+import com.szkarad.szkaradapp.favouriteshops.FavouriteShops
+import com.szkarad.szkaradapp.map.ShopsMapActivity
 import com.szkarad.szkaradapp.shoppinglist.ShoppingList
 import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
 
@@ -91,10 +94,18 @@ fun MainMenu() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(20.dp))
-        CommonComposables.WelcomeText(stringResource(id = R.string.welcome_text), Color.Black,)
+        CommonComposables.WelcomeText(stringResource(id = R.string.welcome_text)
+                + " " + (auth.currentUser?.email?.removeEmailEnding()), Color.Black,)
 
         Spacer(modifier = Modifier.height(50.dp))
         SwitchActivityButton(context, ShoppingList::class.java)
+
+        Spacer(modifier = Modifier.height(20.dp))
+        SwitchActivityButton(context, FavouriteShops::class.java)
+
+        Spacer(modifier = Modifier.height(20.dp))
+        SwitchActivityButton(context, ShopsMapActivity::class.java)
+
         Spacer(modifier = Modifier.height(20.dp))
         SwitchActivityButton(context, SettingsActivity::class.java)
 
@@ -113,7 +124,7 @@ fun SwitchActivityButton(context: Context, activityClass: Class<*>) {
     Button(
         onClick = { context.startActivity(Intent(context, activityClass)) },
         modifier = Modifier
-            .requiredHeight(90.dp)
+            .requiredHeight(80.dp)
             .requiredWidth(250.dp)
             .shadow(
                 elevation = 4.dp,

@@ -1,4 +1,4 @@
-package com.szkarad.szkaradapp.shoppinglist.productdb
+package com.szkarad.szkaradapp.firebasedb.productdb
 
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError

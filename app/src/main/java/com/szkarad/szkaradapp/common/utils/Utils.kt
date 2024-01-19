@@ -9,6 +9,10 @@ class Utils {
         fun String.removeActivityKeyword(): String {
             return this.replace(Regex("Activity"), "")
         }
+
+        fun String.removeEmailEnding(): String {
+            return this.substring(0, this.indexOf("@"))
+        }
     }
 
 }

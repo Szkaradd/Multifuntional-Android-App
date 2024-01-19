@@ -1,10 +1,16 @@
-package com.szkarad.szkaradapp.shoppinglist
+package com.szkarad.szkaradapp.favouriteshops
 
-import android.content.ComponentName
+import android.annotation.SuppressLint
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,24 +20,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,63 +51,67 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.GeofencingClient
+import com.google.android.gms.location.GeofencingRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.szkarad.szkaradapp.common.CommonComposables
-import com.szkarad.szkaradapp.firebasedb.productdb.Product
-import com.szkarad.szkaradapp.firebasedb.productdb.ProductViewModel
+import com.szkarad.szkaradapp.firebasedb.shopdb.Shop
+import com.szkarad.szkaradapp.firebasedb.shopdb.ShopViewModel
+import com.szkarad.szkaradapp.map.GeoReceiver
+import com.szkarad.szkaradapp.map.getCurrentLocation
+import com.szkarad.szkaradapp.shoppinglist.ActionButton
 import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
-import java.math.BigDecimal
 
+class FavouriteShops : ComponentActivity() {
+    private var selectedShopId by mutableStateOf<String?>(null)
+    private lateinit var geoReceiver: GeoReceiver
 
-class ShoppingList : ComponentActivity() {
-    var selectedProductId by mutableStateOf<String?>(null)
-
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        handleIntent(intent)
-
         setContent {
             SzkaradAppTheme {
                 val user = FirebaseAuth.getInstance().currentUser
                 val uid = user!!.uid
-                val pvm = ProductViewModel(application, uid)
+                val svm = ShopViewModel(application, uid)
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.secondary
                 ) {
-                    ShoppingListScreen(pvm, selectedProductId)
+                    ShopsListScreen(svm, selectedShopId)
                 }
             }
         }
+        val filter = IntentFilter().apply {
+            addAction("com.szkarad.szkaradapp.ACTION_GEOFENCE_TRANSITION")
+        }
+        geoReceiver = GeoReceiver()
+        registerReceiver(geoReceiver, filter, RECEIVER_NOT_EXPORTED)
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        handleIntent(intent)
-    }
-
-    private fun handleIntent(intent: Intent) {
-        selectedProductId = intent.getStringExtra("com.szkarad.receiverapp.productId")
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(geoReceiver)
     }
 }
 
-
 @Composable
-fun ShoppingListScreen(pvm: ProductViewModel, selectedProductId: String?) {
+fun ShopsListScreen(svm: ShopViewModel, selectedShopId: String?) {
     Column {
         CommonComposables.CommonTopBar()
-        ProductsListColumn(pvm, selectedProductId)
+        ShopsListColumn(svm, selectedShopId)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductsListColumn(pvm: ProductViewModel, selectedProductId: String?) {
+fun ShopsListColumn(svm: ShopViewModel, selectedShopId: String?) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.secondary,
-        bottomBar = { ListManagementRow(pvm) }
+        bottomBar = { ListManagementRow(svm) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -117,37 +122,24 @@ fun ProductsListColumn(pvm: ProductViewModel, selectedProductId: String?) {
         ) {
             Spacer(modifier = Modifier.height(12.dp))
             CommonComposables.WelcomeText(
-                text = "Here is your shopping list!",
+                text = "Here are your favourite shops!",
                 MaterialTheme.colorScheme.onSecondary,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            ProductsList(pvm, selectedProductId)
+            ShopsList(svm, selectedShopId)
         }
     }
 }
 
 @Composable
-fun ActionButton(text: String, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.tertiary,
-            contentColor = MaterialTheme.colorScheme.onTertiary
-        ),
-        modifier = Modifier
-            .padding(8.dp)
-            .requiredWidth(160.dp)
-            .requiredHeight(50.dp)
-    ) {
-        Text(text = text, style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
-@Composable
-fun ListManagementRow(pvm: ProductViewModel) {
+fun ListManagementRow(svm: ShopViewModel) {
     val context = LocalContext.current
     var showClearConfirmDialog by remember { mutableStateOf(false) }
     var showAddItemDialog by remember { mutableStateOf(false) }
+
+    // GEO FENCE STUFF:
+    var geoID by remember { mutableIntStateOf(0) }
+    val geoClient = LocationServices.getGeofencingClient(context)
 
     if (showClearConfirmDialog) {
         AlertDialog(
@@ -156,7 +148,7 @@ fun ListManagementRow(pvm: ProductViewModel) {
             text = { Text("Are you sure that you want to clear the list?") },
             confirmButton = {
                 Button(onClick = {
-                    pvm.deleteAllProducts()
+                    svm.deleteAllShops()
                     showClearConfirmDialog = false
                 }) {
                     Text("Yes")
@@ -171,32 +163,29 @@ fun ListManagementRow(pvm: ProductViewModel) {
     }
 
     if (showAddItemDialog) {
-        ProductDialog(
-            title = "Add Item",
+        ShopDialog(
+            title = "Add Shop",
             initialName = "",
-            initialCount = "",
-            initialPrice = "",
-            onConfirm = { name, count, price ->
-                val product = Product(
-                    id = "",
-                    name = name,
-                    price = price,
-                    count = count.toInt(),
-                    status = false
-                )
-                pvm.insertProduct(product) { id ->
-                    product.id = id
-                    pvm.updateProduct(product)
-                    val intent = Intent("com.szkarad.szkaradapp.ACTION_SEND")
-                    intent.putExtra("com.szkarad.szkaradapp.productId", id)
-                    intent.putExtra("com.szkarad.szkaradapp.productName", name)
-                    intent.component = ComponentName(
-                        "com.szkarad.receiverapp",
-                        "com.szkarad.receiverapp.ProductReceiver"
+            initialDesc = "",
+            onConfirm = { name, description ->
+                getCurrentLocation(context) {
+                    val shop = Shop(
+                        id = "",
+                        name = name,
+                        description = description,
+                        radius = 100.0,
+                        latitude = it.latitude,
+                        longitude = it.longitude
                     )
-                    context.sendBroadcast(intent)
+                    svm.insertShop(shop) { id ->
+                        shop.id = id
+                        svm.updateShop(shop)
+                    }
+
+                    geoID = handleGeoFence(context, it, geoID, geoClient)
+
+                    showAddItemDialog = false
                 }
-                showAddItemDialog = false
             },
             onDismiss = { showAddItemDialog = false }
         )
@@ -211,25 +200,65 @@ fun ListManagementRow(pvm: ProductViewModel) {
     }
 }
 
+@SuppressLint("MissingPermission")
+fun handleGeoFence(
+    context: Context,
+    location: LatLng,
+    geoID: Int,
+    geoClient: GeofencingClient
+): Int {
+    val geo = Geofence.Builder()
+        .setCircularRegion(
+            location.latitude,
+            location.longitude,
+            100F
+        )
+        .setExpirationDuration(Geofence.NEVER_EXPIRE)
+        .setRequestId("GeoId: $geoID")
+        .setTransitionTypes(
+            Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT
+        )
+        .build()
+    val request = GeofencingRequest.Builder()
+        .addGeofence(geo)
+        .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+        .build()
+    val pendingIntent = PendingIntent.getBroadcast(
+        context,
+        0,
+        Intent(context, GeoReceiver::class.java).apply {
+            action = "com.szkarad.szkaradapp.ACTION_GEOFENCE_TRANSITION"
+        },
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    geoClient.addGeofences(request, pendingIntent)
+        .addOnSuccessListener {
+            Log.i("Geofence", "Dodano geofence z id: ${geo.requestId}")
+        }
+        .addOnFailureListener { exc ->
+            Log.e("LocationError", exc.message.toString())
+        }
+    return geoID + 1
+}
 
 @Composable
-fun ProductsList(pvm: ProductViewModel, selectedProductId: String?) {
-    val products by pvm.products.collectAsState(emptyList())
-    var selectedProduct by remember { mutableStateOf<Product?>(null) }
+fun ShopsList(svm: ShopViewModel, selectedShopId: String?) {
+    val shops by svm.shops.collectAsState(emptyList())
+    var selectedShop by remember { mutableStateOf<Shop?>(null) }
 
-    LaunchedEffect(selectedProductId) {
-        if (selectedProductId != null && selectedProductId != "") {
-            pvm.getProductById(selectedProductId) { product ->
-                selectedProduct = product
+    LaunchedEffect(selectedShopId) {
+        if (selectedShopId != null && selectedShopId != "") {
+            svm.getShopById(selectedShopId) { shop ->
+                selectedShop = shop
             }
         }
     }
 
-    if (selectedProduct != null) {
-        EditProductDialog(
-            product = selectedProduct!!,
-            onDismiss = { selectedProduct = null },
-            pvm = pvm
+    if (selectedShop != null) {
+        EditShopDialog(
+            shop = selectedShop!!,
+            onDismiss = { selectedShop = null },
+            svm = svm
         )
     }
 
@@ -238,15 +267,14 @@ fun ProductsList(pvm: ProductViewModel, selectedProductId: String?) {
             .fillMaxHeight()
             .fillMaxWidth()
     ) {
-        items(products) { product ->
-            ProductRow(product, pvm, onEditClick = { selectedProduct = product })
+        items(shops) { shop ->
+            ShopRow(shop, svm, onEditClick = { selectedShop = shop })
         }
     }
 }
 
 @Composable
-fun ProductRow(product: Product, pvm: ProductViewModel, onEditClick: () -> Unit) {
-    var status by remember { mutableStateOf(product.status) }
+fun ShopRow(shop: Shop, svm: ShopViewModel, onEditClick: () -> Unit) {
 
     Surface(
         modifier = Modifier
@@ -259,60 +287,51 @@ fun ProductRow(product: Product, pvm: ProductViewModel, onEditClick: () -> Unit)
             modifier = Modifier.padding(all = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Checkbox(
-                checked = status,
-                onCheckedChange = {
-                    status = it
-                    pvm.updateProduct(product.copy(status = status))
-                }
-            )
-            ProductDescription(product, Modifier.weight(1f))
+            ShopDescription(shop, Modifier.weight(1f))
             Spacer(modifier = Modifier.width(8.dp))
-            ProductSettings(product, pvm, onEditClick)
+            ShopSettings(shop, svm, onEditClick)
         }
     }
 }
 
 @Composable
-fun ProductSettings(product: Product, pvm: ProductViewModel, onEditClick: () -> Unit) {
+fun ShopSettings(shop: Shop, svm: ShopViewModel, onEditClick: () -> Unit) {
     IconButton(onClick = onEditClick, modifier = Modifier.size(32.dp)) {
         Icon(Icons.Outlined.Edit, "Edit", tint = MaterialTheme.colorScheme.onPrimary)
     }
-    IconButton(onClick = { pvm.deleteProduct(product) }, modifier = Modifier.size(32.dp)) {
+    IconButton(onClick = { svm.deleteShop(shop) }, modifier = Modifier.size(32.dp)) {
         Icon(Icons.Outlined.Delete, "Delete", tint = MaterialTheme.colorScheme.onPrimary)
     }
 }
 
 @Composable
-fun ProductDescription(product: Product, modifier: Modifier = Modifier) {
+fun ShopDescription(shop: Shop, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(
-            text = "${product.name} x (${product.count})",
+            text = "${shop.name}: ${shop.description}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onPrimary,
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        // TODO: Consider adding some more information
+        /*Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "total price: ${BigDecimal(product.price) * BigDecimal(product.count)}",
+            text = "position: ${shop.geoPositionX}, ${shop.geoPositionY}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onPrimary,
-        )
+        )*/
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductDialog(
+fun ShopDialog(
     title: String,
     initialName: String,
-    initialCount: String,
-    initialPrice: String,
-    onConfirm: (String, String, String) -> Unit,
+    initialDesc: String,
+    onConfirm: (String, String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(initialName) }
-    var count by remember { mutableStateOf(initialCount) }
-    var price by remember { mutableStateOf(initialPrice) }
+    var desc by remember { mutableStateOf(initialDesc) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
@@ -328,19 +347,9 @@ fun ProductDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 TextField(
-                    value = count,
-                    onValueChange = { count = it },
-                    label = { Text("Count") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = count.toIntOrNull() == null || count.toInt() <= 0,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                TextField(
-                    value = price,
-                    onValueChange = { price = it },
-                    label = { Text("Unit Price") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = price.toBigDecimalOrNull() == null || price.toBigDecimal() < BigDecimal.ZERO,
+                    value = desc,
+                    onValueChange = { desc = it },
+                    label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 errorMessage?.let { Text(it, color = Color.Red) }
@@ -351,12 +360,8 @@ fun ProductDialog(
                 onClick = {
                     if (name.isBlank() || name.length > 50) {
                         errorMessage = "Invalid name"
-                    } else if (count.toIntOrNull() == null || count.toInt() <= 0) {
-                        errorMessage = "Invalid count"
-                    } else if (price.toBigDecimalOrNull() == null || price.toBigDecimal() < BigDecimal.ZERO) {
-                        errorMessage = "Invalid price"
                     } else {
-                        onConfirm(name, count, price)
+                        onConfirm(name, desc)
                     }
                 }
             ) { Text("Confirm") }
@@ -368,18 +373,17 @@ fun ProductDialog(
 }
 
 @Composable
-fun EditProductDialog(product: Product, onDismiss: () -> Unit, pvm: ProductViewModel) {
-    ProductDialog(
-        title = "Edit Product",
-        initialName = product.name,
-        initialCount = product.count.toString(),
-        initialPrice = product.price,
-        onConfirm = { newName, newCount, newPrice ->
-            pvm.updateProduct(
-                product.copy(
+fun EditShopDialog(shop: Shop, onDismiss: () -> Unit, svm: ShopViewModel) {
+    ShopDialog(
+        title = "Edit Shop",
+        initialName = shop.name,
+        initialDesc = shop.description,
+        // TODO: Add changing location
+        onConfirm = { newName, newDesc ->
+            svm.updateShop(
+                shop.copy(
                     name = newName,
-                    count = newCount.toInt(),
-                    price = newPrice
+                    description = newDesc
                 )
             )
             onDismiss()

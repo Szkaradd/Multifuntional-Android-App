@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -12,18 +16,34 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SzkaradApp"
         tools:targetApi="31">
+
+        <receiver
+            android:name=".map.GeoReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <activity
+            android:name=".map.ShopsMapActivity"
+            android:exported="true"
+            android:label="@string/title_activity_shops_map"
+            android:theme="@style/Theme.SzkaradApp" />
+        <activity
+            android:name=".favouriteshops.FavouriteShops"
+            android:exported="false"
+            android:label="@string/title_activity_favourite_shops"
+            android:theme="@style/Theme.SzkaradApp" />
         <activity
             android:name=".LoginActivity"
             android:exported="true"
             android:label="@string/title_activity_login"
-            android:theme="@style/Theme.SzkaradApp">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
+            android:theme="@style/Theme.SzkaradApp" />
         <activity
             android:name=".SettingsActivity"
             android:exported="false"

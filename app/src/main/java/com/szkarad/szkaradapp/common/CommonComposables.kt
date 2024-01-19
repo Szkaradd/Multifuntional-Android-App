@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.szkarad.szkaradapp.MainActivity
 import com.szkarad.szkaradapp.SettingsActivity
 import com.szkarad.szkaradapp.common.utils.Utils.Companion.addSpacesBeforeCapitals
+import com.szkarad.szkaradapp.common.utils.Utils.Companion.removeActivityKeyword
 import com.szkarad.szkaradapp.ui.theme.SzkaradAppTheme
 
 class CommonComposables {
@@ -59,9 +60,11 @@ class CommonComposables {
         @Composable
         fun CommonTopBar() {
             val context = LocalContext.current
+            val title =
+                context.javaClass.simpleName.addSpacesBeforeCapitals().removeActivityKeyword()
 
             TopAppBar(
-                title = { Text(context.javaClass.simpleName.addSpacesBeforeCapitals()) },
+                title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = {
                         context.startActivity(Intent(context, MainActivity::class.java))
@@ -70,11 +73,13 @@ class CommonComposables {
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        val intent = Intent(context, SettingsActivity::class.java)
-                        context.startActivity(intent)
-                    }) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    if (!title.lowercase().contains("settings")) {
+                        IconButton(onClick = {
+                            val intent = Intent(context, SettingsActivity::class.java)
+                            context.startActivity(intent)
+                        }) {
+                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.smallTopAppBarColors(

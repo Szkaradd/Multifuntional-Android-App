@@ -1,4 +1,4 @@
-package com.szkarad.szkaradapp.shoppinglist.productdb
+package com.szkarad.szkaradapp.firebasedb.productdb
 
 data class Product(
     var id: String,
